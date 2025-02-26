@@ -12,8 +12,8 @@ provider "docker" {
 }
  
 resource "docker_image" "ansible" {
-  name         = "willhallonline/ansible:latest"
-  keep_locally = false
+  build {
+    context = "."
 }
  
 resource "docker_container" "ansible" {
