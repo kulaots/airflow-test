@@ -19,4 +19,12 @@ resource "docker_image" "ssh_and_python" {
 resource "docker_container" "airflow" {
   image = docker_image.ssh_and_python.image_id
   name  = "airflow"
+  ports {
+    internal = 80
+    external = 8080
+  }
+    ports {
+    internal = 22
+    external = 2222
+    }
 } 
