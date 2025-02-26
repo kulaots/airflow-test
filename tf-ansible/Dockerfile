@@ -9,8 +9,6 @@ RUN apt-get update && \
     apt-get install -y vim && \
     apt-get install -y ansible && \
     apt-get clean
-    
-RUN git clone git@github.com:kulaots/airflow-test.git 
 
 RUN mkdir /var/run/sshd && \
     echo 'root:password' | chpasswd && \
