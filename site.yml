@@ -1,0 +1,105 @@
+---
+- name: Install required Ubuntu packages
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: true
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - python3-pip
+          - python3-dev
+          - python3-venv
+          - libmysqlclient-dev
+          - build-essential
+          - sudo
+          - apt-utils
+          - ca-certificates
+          - curl
+          - dumb-init
+          - freetds-bin
+          - locales
+          - netcat-openbsd
+          - lsb-release
+          - rsync
+          - sqlite3
+          - unixodbc
+        state: present
+        force_apt_get: true
+
+    - name: Install pipenv
+      ansible.builtin.pip:
+        name: pipenv
+        extra_args: --break-system-packages
+
+    - name: Create Airflow directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - /opt/airflow
+        - /opt/airflow/dags
+        - /opt/airflow/plugins
+
+    - name: Install Apache Airflow with pipenv
+      ansible.builtin.command:
+        cmd: pipenv install "apache-airflow[sqlite]==2.10.5"
+        chdir: /opt/airflow
+      ignore_errors: true
+
+    - name: Set AIRFLOW_HOME environment variable
+      ansible.builtin.lineinfile:
+        path: /etc/environment
+        line: 'AIRFLOW_HOME=/opt/airflow'
+        create: true
+
+    - name: Run airflow db migrate
+      ansible.builtin.command:
+        cmd: pipenv run airflow db migrate
+        args:
+          chdir: /opt/airflow
+      ignore_errors: true
+
+    - name: Run airflow db init
+      ansible.builtin.command:
+        cmd: pipenv run airflow db init
+        args:
+          chdir: /opt/airflow
+      ignore_errors: true
+
+    - name: Start airflow webserver
+      ansible.builtin.command:
+        cmd: pipenv run airflow webserver -D
+        args:
+          chdir: /opt/airflow
+      ignore_errors: true
+
+    - name: Start airflow scheduler
+      ansible.builtin.command:
+        cmd: pipenv run airflow scheduler -D
+        args:
+          chdir: /opt/airflow
+      ignore_errors: true
+
+    - name: Create airflow admin user
+      ansible.builtin.command:
+        cmd: pipenv run airflow users create --role Admin --username admin1 --email none --firstname admin1 --lastname admin1 --password admin1
+        args:
+          chdir: /opt/airflow
+      ignore_errors: true
+
+    - name: Copy test DAG
+      ansible.builtin.copy:
+        src: test-dag.py
+        dest: /opt/airflow/dags/test-dag.py
+
+    - name: Reserialize Airflow DAGs
+      ansible.builtin.command:
+        cmd: pipenv run airflow dags reserialize
+        args:
+          chdir: /opt/airflow
+      ignore_errors: true
