@@ -12,8 +12,11 @@ provider "docker" {
 }
  
 resource "docker_image" "ansible" {
+  name = "ansible"
   build {
     context = "."
+    dockerfile = "Dockerfile"
+  }
 }
  
 resource "docker_container" "ansible" {
