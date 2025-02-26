@@ -103,3 +103,10 @@
         args:
           chdir: /opt/airflow
       ignore_errors: true
+
+    - name: Reserialize Airflow DAGs
+      ansible.builtin.command:
+        cmd: pipenv run airflow dags unpause check_memory_usage
+        args:
+          chdir: /opt/airflow
+      ignore_errors: true
